@@ -9,6 +9,7 @@ import { COLORS } from "@/constants/theme";
 import { Link } from "expo-router";
 import { Image } from "expo-image";
 import { formatDistanceToNow } from "date-fns";
+import { Doc, Id } from "@/convex/_generated/dataModel";
 
 export default function Notifications() {
   const notifications = useQuery(api.notifications.get);
@@ -21,7 +22,7 @@ export default function Notifications() {
       </View>
       <FlatList
         data={notifications}
-        renderItem={({ item }) => <NotificationItem notification={item} />}
+        renderItem={({ item }) => <Notification notification={item} />}
         keyExtractor={(item) => item._id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContainer}
@@ -41,7 +42,29 @@ const NotificationsNotFound = () => {
   );
 };
 
-const NotificationItem = ({ notification }: { notification: any }) => {
+interface NotificationProps {
+  notification: {
+    _id: string;
+    type: string;
+    sender: {
+      image: string;
+      username: string;
+    };
+    comment?: string;
+    post: {
+      _id: Id<"posts">;
+      imageUrl: string;
+      caption: string;
+      _creationTime: number;
+      likes: number;
+      comments: number;
+      userId: Id<"users">;
+    } | null;
+    _creationTime: number;
+  };
+}
+
+const Notification = ({ notification }: NotificationProps) => {
   return (
     <View style={styles.notificationItem}>
       <View style={styles.notificationContent}>
