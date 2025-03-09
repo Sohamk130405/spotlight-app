@@ -32,14 +32,18 @@ export default function Index() {
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={posts}
-        renderItem={({ item }) => <Post post={item} />}
-        keyExtractor={(item) => item._id}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 60 }}
-        ListHeaderComponent={<StoriesSection />}
-      />
+      {posts.length > 0 ? (
+        <FlatList
+          data={posts}
+          renderItem={({ item }) => <Post post={item} />}
+          keyExtractor={(item) => item._id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 60 }}
+          ListHeaderComponent={<StoriesSection />}
+        />
+      ) : (
+        <NoPostFound />
+      )}
     </View>
   );
 }
