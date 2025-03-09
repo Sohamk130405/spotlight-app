@@ -6,10 +6,11 @@ import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants/theme";
 import { Id } from "@/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import CommentsModal from "./CommentsModal";
 import { formatDistanceToNow } from "date-fns";
+import { useUser } from "@clerk/clerk-expo";
 // `/${post.author._id}`
 
 interface PostProps {
@@ -38,14 +39,31 @@ export default function Post({ post }: PostProps) {
   const [showComments, setShowComments] = useState(false);
   const toggleLike = useMutation(api.posts.toggleLike);
   const toggleBookmark = useMutation(api.bookmarks.toggleBookmark);
-
+  const deletePost = useMutation(api.posts.remove);
+  const { user } = useUser();
+  const currentUser = useQuery(
+    api.users.getUserByClerkId,
+    user
+      ? {
+          clerkId: user?.id,
+        }
+      : "skip"
+  );
   const handleLike = async () => {
     try {
       const res = await toggleLike({ postId: post._id });
       setIsLiked(res);
       setLikesCount((prev) => (res ? prev + 1 : prev - 1));
     } catch (error) {
-      console.log("Error in liking post", error);
+      console.log("Error in liking post:", error);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deletePost({ postId: post._id });
+    } catch (error) {
+      console.log("Error in deleting post:", error);
     }
   };
 
@@ -54,7 +72,7 @@ export default function Post({ post }: PostProps) {
       const res = await toggleBookmark({ postId: post._id });
       setIsBookmarked(res);
     } catch (error) {
-      console.log("Error in liking post", error);
+      console.log("Error in bookmarking post:", error);
     }
   };
   return (
@@ -74,7 +92,7 @@ export default function Post({ post }: PostProps) {
           </TouchableOpacity>
         </Link>
         {/* Based upon user role*/}
-        {true ? (
+        {currentUser?._id !== post.author._id ? (
           <TouchableOpacity>
             <Ionicons
               name="ellipsis-horizontal"
@@ -83,7 +101,7 @@ export default function Post({ post }: PostProps) {
             />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handleDelete}>
             <Ionicons name="trash-outline" size={20} color={COLORS.primary} />
           </TouchableOpacity>
         )}

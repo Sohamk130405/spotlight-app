@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthenticatedUser } from "./users";
 
@@ -76,7 +76,7 @@ export const create = mutation({
   },
 });
 
-export const toggleLikes = mutation({
+export const toggleLike = mutation({
   args: { postId: v.id("posts") },
   handler: async (ctx, { postId }) => {
     const currentUser = await getAuthenticatedUser(ctx);
@@ -118,3 +118,51 @@ export const toggleLikes = mutation({
     }
   },
 });
+
+export const remove = mutation({
+  args: {
+    postId: v.id("posts"),
+  },
+  handler: async (ctx, { postId }) => {
+    const currentUser = await getAuthenticatedUser(ctx);
+    const post = await ctx.db.get(postId);
+    if (!post) throw new ConvexError("Post not found");
+    if (currentUser._id !== post.userId) throw new ConvexError("Unauthorized");
+
+    // Fetch related data in parallel
+    const [likes, comments, bookmarks] = await Promise.all([
+      ctx.db
+        .query("likes")
+        .withIndex("by_post", (q) => q.eq("postId", postId))
+        .collect(),
+      ctx.db
+        .query("comments")
+        .withIndex("by_post", (q) => q.eq("postId", postId))
+        .collect(),
+      ctx.db
+        .query("bookmarks")
+        .withIndex("by_post", (q) => q.eq("postId", postId))
+        .collect(),
+    ]);
+
+    // Sequentially delete likes, comments, and bookmarks
+    for (const like of likes) await ctx.db.delete(like._id);
+    for (const comment of comments) await ctx.db.delete(comment._id);
+    for (const bookmark of bookmarks) await ctx.db.delete(bookmark._id);
+
+    // Delete storage file if it exists
+    if (post.storageId) {
+      await ctx.storage.delete(post.storageId);
+    }
+
+    // Delete the post
+    await ctx.db.delete(postId);
+
+    // Update the user's post count
+    await ctx.db.patch(currentUser._id, {
+      posts: Math.max(0, (currentUser.posts || 0) - 1),
+    });
+  },
+});
+
+

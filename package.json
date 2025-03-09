@@ -21,6 +21,7 @@
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "convex": "^1.19.5",
+    "date-fns": "^4.1.0",
     "expo": "~52.0.37",
     "expo-app-loading": "^2.1.1",
     "expo-auth-session": "^6.0.3",
