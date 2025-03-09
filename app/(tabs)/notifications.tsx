@@ -9,7 +9,7 @@ import { COLORS } from "@/constants/theme";
 import { Link } from "expo-router";
 import { Image } from "expo-image";
 import { formatDistanceToNow } from "date-fns";
-import { Doc, Id } from "@/convex/_generated/dataModel";
+import { Id } from "@/convex/_generated/dataModel";
 
 export default function Notifications() {
   const notifications = useQuery(api.notifications.get);
@@ -47,6 +47,7 @@ interface NotificationProps {
     _id: string;
     type: string;
     sender: {
+      _id: string;
       image: string;
       username: string;
     };
@@ -68,7 +69,7 @@ const Notification = ({ notification }: NotificationProps) => {
   return (
     <View style={styles.notificationItem}>
       <View style={styles.notificationContent}>
-        <Link href={"/"} asChild>
+        <Link href={`/user/${notification.sender._id}`} asChild>
           <TouchableOpacity>
             <Image
               source={notification.sender.image}

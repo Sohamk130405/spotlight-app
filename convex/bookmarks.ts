@@ -20,7 +20,35 @@ export const getBookmarks = query({
       })
     );
 
-    return bookmarksWithPost;
+    const postWithInfo = await Promise.all(
+      bookmarksWithPost.map(async (post) => {
+        const like = await ctx.db
+          .query("likes")
+          .withIndex("by_user_and_post", (q) =>
+            q.eq("userId", currentUser._id).eq("postId", post!._id)
+          )
+          .first();
+
+        const bookmark = await ctx.db
+          .query("bookmarks")
+          .withIndex("by_user_and_post", (q) =>
+            q.eq("userId", currentUser._id).eq("postId", post!._id)
+          )
+          .first();
+
+        return {
+          ...post,
+          author: {
+            _id: currentUser._id,
+            username: currentUser.username,
+            image: currentUser.image,
+          },
+          isLiked: !!like,
+          isBookmarked: !!bookmark,
+        };
+      })
+    );
+    return postWithInfo;
   },
 });
 
