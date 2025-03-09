@@ -9,9 +9,10 @@ import { styles } from "@/styles/feed.styles";
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";
-import React from "react";
+import React, { useState } from "react";
 import {
   FlatList,
+  RefreshControl,
   ScrollView,
   Text,
   TextInput,
@@ -22,6 +23,13 @@ import {
 export default function Index() {
   const { signOut } = useAuth();
   const posts = useQuery(api.posts.getFeedPosts);
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
+  };
   if (posts === undefined) return <Loader />;
   return (
     <View style={styles.container}>
@@ -41,6 +49,13 @@ export default function Index() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 60 }}
           ListHeaderComponent={<StoriesSection />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={COLORS.primary}
+            />
+          }
         />
       ) : (
         <NotFound message="No posts yet" />

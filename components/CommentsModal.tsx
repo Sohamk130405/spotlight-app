@@ -22,13 +22,12 @@ interface CommentsModalProps {
   postId: Id<"posts">;
   isOpen: boolean;
   onClose: () => void;
-  onCommentAdded: () => void;
 }
 
 export default function CommentsModal({
   isOpen,
   onClose,
-  onCommentAdded,
+
   postId,
 }: CommentsModalProps) {
   const [newComment, setNewComment] = useState("");
@@ -39,7 +38,6 @@ export default function CommentsModal({
     try {
       addComments({ content: newComment, postId });
       setNewComment("");
-      onCommentAdded();
     } catch (error) {
       console.log("Error adding comments:", error);
     }

@@ -11,7 +11,7 @@ import { api } from "@/convex/_generated/api";
 import CommentsModal from "./CommentsModal";
 import { formatDistanceToNow } from "date-fns";
 import { useUser } from "@clerk/clerk-expo";
-// `/${post.author._id}`
+
 
 export interface PostProps {
   post: {
@@ -33,9 +33,6 @@ export interface PostProps {
 
 export default function Post({ post }: PostProps) {
   const [isLiked, setIsLiked] = useState(post.isLiked);
-  const [isBookmarked, setIsBookmarked] = useState(post.isBookmarked);
-  const [likesCount, setLikesCount] = useState(post.likes);
-  const [commentsCount, setCommentsCount] = useState(post.comments);
   const [showComments, setShowComments] = useState(false);
   const toggleLike = useMutation(api.posts.toggleLike);
   const toggleBookmark = useMutation(api.bookmarks.toggleBookmark);
@@ -53,7 +50,6 @@ export default function Post({ post }: PostProps) {
     try {
       const res = await toggleLike({ postId: post._id });
       setIsLiked(res);
-      setLikesCount((prev) => (res ? prev + 1 : prev - 1));
     } catch (error) {
       console.log("Error in liking post:", error);
     }
@@ -70,7 +66,6 @@ export default function Post({ post }: PostProps) {
   const handleBookmark = async () => {
     try {
       const res = await toggleBookmark({ postId: post._id });
-      setIsBookmarked(res);
     } catch (error) {
       console.log("Error in bookmarking post:", error);
     }
@@ -142,9 +137,9 @@ export default function Post({ post }: PostProps) {
         </View>
         <TouchableOpacity onPress={handleBookmark}>
           <Ionicons
-            name={isBookmarked ? "bookmark" : "bookmark-outline"}
+            name={post.isBookmarked ? "bookmark" : "bookmark-outline"}
             size={24}
-            color={isBookmarked ? COLORS.primary : COLORS.white}
+            color={post.isBookmarked ? COLORS.primary : COLORS.white}
           />
         </TouchableOpacity>
       </View>
@@ -152,7 +147,7 @@ export default function Post({ post }: PostProps) {
       {/* Post INFO */}
       <View style={styles.postInfo}>
         <Text style={styles.likesText}>
-          {likesCount > 0 ? `${likesCount} likes` : "Be the first one to like"}
+          {post.likes > 0 ? `${post.likes} likes` : "Be the first one to like"}
         </Text>
         {post.caption && (
           <View style={styles.captionContainer}>
@@ -160,10 +155,10 @@ export default function Post({ post }: PostProps) {
             <Text style={styles.captionText}>{post.caption}</Text>
           </View>
         )}
-        {commentsCount > 0 && (
+        {post.comments > 0 && (
           <TouchableOpacity onPress={() => setShowComments(true)}>
             <Text style={styles.commentText}>
-              View {commentsCount} comments
+              View {post.comments} comments
             </Text>
           </TouchableOpacity>
         )}
@@ -174,7 +169,6 @@ export default function Post({ post }: PostProps) {
       <CommentsModal
         isOpen={showComments}
         onClose={() => setShowComments(false)}
-        onCommentAdded={() => setCommentsCount((prev) => prev + 1)}
         postId={post._id}
       />
     </View>
