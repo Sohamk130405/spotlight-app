@@ -1,4 +1,5 @@
 import Loader from "@/components/Loader";
+import NotFound from "@/components/NotFound";
 import Post from "@/components/Post";
 import Story from "@/components/Story";
 import STORIES from "@/constants/mock-data";
@@ -42,7 +43,7 @@ export default function Index() {
           ListHeaderComponent={<StoriesSection />}
         />
       ) : (
-        <NoPostFound />
+        <NotFound message="No posts yet" />
       )}
     </View>
   );
@@ -60,22 +61,5 @@ const StoriesSection = () => {
         <Story key={story.id} story={story} />
       ))}
     </ScrollView>
-  );
-};
-
-const NoPostFound = () => {
-  return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: COLORS.background,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text style={{ fontSize: 20, color: COLORS.grey, marginTop: 20 }}>
-        No posts yet
-      </Text>
-    </View>
   );
 };
