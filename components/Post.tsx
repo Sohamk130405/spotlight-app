@@ -8,6 +8,8 @@ import { COLORS } from "@/constants/theme";
 import { Id } from "@/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import CommentsModal from "./CommentsModal";
+import { formatDistanceToNow } from "date-fns";
 // `/${post.author._id}`
 
 interface PostProps {
@@ -30,9 +32,12 @@ interface PostProps {
 
 export default function Post({ post }: PostProps) {
   const [isLiked, setIsLiked] = useState(post.isLiked);
-  const [isBookmarked, setIsBooisBookmarked] = useState(post.isBookmarked);
+  const [isBookmarked, setIsBookmarked] = useState(post.isBookmarked);
   const [likesCount, setLikesCount] = useState(post.likes);
-  const toggleLike = useMutation(api.posts.toggleLikes);
+  const [commentsCount, setCommentsCount] = useState(post.comments);
+  const [showComments, setShowComments] = useState(false);
+  const toggleLike = useMutation(api.posts.toggleLike);
+  const toggleBookmark = useMutation(api.bookmarks.toggleBookmark);
 
   const handleLike = async () => {
     try {
@@ -44,13 +49,20 @@ export default function Post({ post }: PostProps) {
     }
   };
 
-  const handleBookmark = async () => {};
+  const handleBookmark = async () => {
+    try {
+      const res = await toggleBookmark({ postId: post._id });
+      setIsBookmarked(res);
+    } catch (error) {
+      console.log("Error in liking post", error);
+    }
+  };
   return (
     <View style={styles.post}>
       {/* Post Header */}
       <View style={styles.postHeader}>
         <Link href={"/(tabs)/notifications"}>
-          <TouchableOpacity style={styles.postHeader}>
+          <TouchableOpacity style={styles.postHeaderLeft}>
             <Image
               source={post.author.image}
               style={styles.postAvatar}
@@ -95,7 +107,7 @@ export default function Post({ post }: PostProps) {
               color={isLiked ? COLORS.primary : COLORS.white}
             />
           </TouchableOpacity>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => setShowComments(true)}>
             <Ionicons
               name="chatbubble-outline"
               size={24}
@@ -103,7 +115,7 @@ export default function Post({ post }: PostProps) {
             />
           </TouchableOpacity>
         </View>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={handleBookmark}>
           <Ionicons
             name={isBookmarked ? "bookmark" : "bookmark-outline"}
             size={24}
@@ -123,11 +135,23 @@ export default function Post({ post }: PostProps) {
             <Text style={styles.captionText}>{post.caption}</Text>
           </View>
         )}
-        <TouchableOpacity>
-          <Text style={styles.commentText}>View all 2 comments</Text>
-        </TouchableOpacity>
-        <Text style={styles.timeAgo}>2 hours ago</Text>
+        {commentsCount > 0 && (
+          <TouchableOpacity onPress={() => setShowComments(true)}>
+            <Text style={styles.commentText}>
+              View {commentsCount} comments
+            </Text>
+          </TouchableOpacity>
+        )}
+        <Text style={styles.timeAgo}>
+          {formatDistanceToNow(post._creationTime, { addSuffix: true })}
+        </Text>
       </View>
+      <CommentsModal
+        isOpen={showComments}
+        onClose={() => setShowComments(false)}
+        onCommentAdded={() => setCommentsCount((prev) => prev + 1)}
+        postId={post._id}
+      />
     </View>
   );
 }

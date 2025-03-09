@@ -33,7 +33,7 @@ export default defineSchema({
   comments: defineTable({
     userId: v.id("users"),
     postId: v.id("posts"),
-    content: v.number(),
+    content: v.string(),
   }).index("by_post", ["postId"]),
 
   follows: defineTable({
