@@ -58,6 +58,7 @@ export const styles = StyleSheet.create({
     borderColor: COLORS.surface,
   },
   notificationInfo: {
+    marginLeft:10,
     flex: 1,
   },
   username: {

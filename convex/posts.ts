@@ -130,7 +130,7 @@ export const remove = mutation({
     if (currentUser._id !== post.userId) throw new ConvexError("Unauthorized");
 
     // Fetch related data in parallel
-    const [likes, comments, bookmarks] = await Promise.all([
+    const [likes, comments, bookmarks, notifications] = await Promise.all([
       ctx.db
         .query("likes")
         .withIndex("by_post", (q) => q.eq("postId", postId))
@@ -143,12 +143,18 @@ export const remove = mutation({
         .query("bookmarks")
         .withIndex("by_post", (q) => q.eq("postId", postId))
         .collect(),
+      ctx.db
+        .query("notifications")
+        .withIndex("by_post", (q) => q.eq("postId", postId))
+        .collect(),
     ]);
 
     // Sequentially delete likes, comments, and bookmarks
     for (const like of likes) await ctx.db.delete(like._id);
     for (const comment of comments) await ctx.db.delete(comment._id);
     for (const bookmark of bookmarks) await ctx.db.delete(bookmark._id);
+    for (const notification of notifications)
+      await ctx.db.delete(notification._id);
 
     // Delete storage file if it exists
     if (post.storageId) {
@@ -164,5 +170,3 @@ export const remove = mutation({
     });
   },
 });
-
-
