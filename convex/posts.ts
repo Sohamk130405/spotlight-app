@@ -75,3 +75,46 @@ export const create = mutation({
     return postId;
   },
 });
+
+export const toggleLikes = mutation({
+  args: { postId: v.id("posts") },
+  handler: async (ctx, { postId }) => {
+    const currentUser = await getAuthenticatedUser(ctx);
+    const existing = await ctx.db
+      .query("likes")
+      .withIndex("by_user_and_post", (q) =>
+        q.eq("userId", currentUser._id).eq("postId", postId)
+      )
+      .first();
+    const post = await ctx.db.get(postId);
+    if (!post) throw new Error("Post not exist");
+
+    if (existing) {
+      // remove like
+      await ctx.db.delete(existing._id);
+      await ctx.db.patch(postId, {
+        likes: post.likes - 1,
+      });
+      return false;
+    } else {
+      // add like
+
+      await ctx.db.insert("likes", { postId, userId: currentUser._id });
+      await ctx.db.patch(postId, {
+        likes: post.likes + 1,
+      });
+
+      // send notification
+      if (currentUser._id !== post.userId) {
+        await ctx.db.insert("notifications", {
+          receiverId: post.userId,
+          senderId: currentUser._id,
+          type: "like",
+          postId,
+        });
+      }
+
+      return true;
+    }
+  },
+});

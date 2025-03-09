@@ -1,11 +1,13 @@
 import { View, Text, TouchableOpacity } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import { styles } from "@/styles/feed.styles";
 import { Link } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants/theme";
 import { Id } from "@/convex/_generated/dataModel";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 // `/${post.author._id}`
 
 interface PostProps {
@@ -27,6 +29,22 @@ interface PostProps {
 }
 
 export default function Post({ post }: PostProps) {
+  const [isLiked, setIsLiked] = useState(post.isLiked);
+  const [isBookmarked, setIsBooisBookmarked] = useState(post.isBookmarked);
+  const [likesCount, setLikesCount] = useState(post.likes);
+  const toggleLike = useMutation(api.posts.toggleLikes);
+
+  const handleLike = async () => {
+    try {
+      const res = await toggleLike({ postId: post._id });
+      setIsLiked(res);
+      setLikesCount((prev) => (res ? prev + 1 : prev - 1));
+    } catch (error) {
+      console.log("Error in liking post", error);
+    }
+  };
+
+  const handleBookmark = async () => {};
   return (
     <View style={styles.post}>
       {/* Post Header */}
@@ -70,11 +88,11 @@ export default function Post({ post }: PostProps) {
       {/* Post Actions */}
       <View style={styles.postActions}>
         <View style={styles.postActionsLeft}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handleLike}>
             <Ionicons
-              name="heart-outline"
+              name={isLiked ? "heart" : "heart-outline"}
               size={24}
-              color={post.isLiked ? COLORS.primary : COLORS.white}
+              color={isLiked ? COLORS.primary : COLORS.white}
             />
           </TouchableOpacity>
           <TouchableOpacity>
@@ -87,16 +105,18 @@ export default function Post({ post }: PostProps) {
         </View>
         <TouchableOpacity>
           <Ionicons
-            name="bookmark-outline"
+            name={isBookmarked ? "bookmark" : "bookmark-outline"}
             size={24}
-            color={post.isBookmarked ? COLORS.primary : COLORS.white}
+            color={isBookmarked ? COLORS.primary : COLORS.white}
           />
         </TouchableOpacity>
       </View>
 
       {/* Post INFO */}
       <View style={styles.postInfo}>
-        <Text style={styles.likesText}>{post.likes} likes</Text>
+        <Text style={styles.likesText}>
+          {likesCount > 0 ? `${likesCount} likes` : "Be the first one to like"}
+        </Text>
         {post.caption && (
           <View style={styles.captionContainer}>
             <Text style={styles.captionUsername}>{post.author.username}</Text>
