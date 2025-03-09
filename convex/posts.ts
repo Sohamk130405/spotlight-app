@@ -49,6 +49,55 @@ export const getFeedPosts = query({
   },
 });
 
+export const getPostsByUser = query({
+  args: { userId: v.optional(v.id("users")) },
+  handler: async (ctx, { userId }) => {
+    const user = userId
+      ? await ctx.db.get(userId)
+      : await getAuthenticatedUser(ctx);
+
+    if (!user) return [];
+    // get all posts
+    const posts = await ctx.db
+      .query("posts")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .order("desc")
+      .collect();
+    if (posts.length === 0) return [];
+
+    //  enhance post with user data and interaction status
+    const postWithInfo = await Promise.all(
+      posts.map(async (post) => {
+        const like = await ctx.db
+          .query("likes")
+          .withIndex("by_user_and_post", (q) =>
+            q.eq("userId", user._id).eq("postId", post._id)
+          )
+          .first();
+
+        const bookmark = await ctx.db
+          .query("bookmarks")
+          .withIndex("by_user_and_post", (q) =>
+            q.eq("userId", user._id).eq("postId", post._id)
+          )
+          .first();
+
+        return {
+          ...post,
+          author: {
+            _id: user._id,
+            username: user.username,
+            image: user.image,
+          },
+          isLiked: !!like,
+          isBookmarked: !!bookmark,
+        };
+      })
+    );
+    return postWithInfo;
+  },
+});
+
 export const create = mutation({
   args: {
     storageId: v.id("_storage"),

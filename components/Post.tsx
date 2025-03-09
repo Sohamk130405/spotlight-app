@@ -13,7 +13,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useUser } from "@clerk/clerk-expo";
 // `/${post.author._id}`
 
-interface PostProps {
+export interface PostProps {
   post: {
     _id: Id<"posts">;
     imageUrl: string;

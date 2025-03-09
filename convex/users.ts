@@ -47,3 +47,25 @@ export const getUserByClerkId = query({
     return user;
   },
 });
+
+export const update = mutation({
+  args: {
+    username: v.string(),
+    fullname: v.string(),
+    bio: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existingUser = await getAuthenticatedUser(ctx);
+    if (!existingUser) throw new Error("User not found");
+    if (existingUser.username !== args.username) {
+      const existingUsername = await ctx.db
+        .query("users")
+        .withIndex("by_username", (q) => q.eq("username", args.username))
+        .first();
+      if (existingUsername) throw new Error("Username is not unique");
+    }
+    await ctx.db.patch(existingUser._id, {
+      ...args,
+    });
+  },
+});
